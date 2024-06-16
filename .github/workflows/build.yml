@@ -4,6 +4,7 @@ name: build-image
 on: # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
   push:
     branches:
+      - main
       - dev
     paths-ignore: # don't rebuild if only documentation has changed
       - "**.md"
