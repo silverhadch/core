@@ -5,6 +5,7 @@ on: # https://docs.github.com/en/actions/using-workflows/events-that-trigger-wor
   push:
     branches:
       - main
+      - dev
     paths-ignore: # don't rebuild if only documentation has changed
       - "**.md"
   pull_request:
