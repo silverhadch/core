@@ -24,7 +24,15 @@ cp -a /etc/pacman.d/gnupg "$newroot"/etc/pacman.d
 cp /etc/pacman.conf "$newroot"/etc
 ls -l "$newroot"/etc
 
+cat > /usr/bin/install-packages-build <<"EOF"
+#!/bin/bash
+pacman -Sy --needed --noconfirm "$@" || (sleep 10; pacman -Sy --needed --noconfirm "$@" || (sleep 10; pacman -Sy --needed --noconfirm "$@"))
+exit $?
+EOF
+
+chmod 755 /usr/bin/install-packages-build
+
 echo 'Installing packages to' "$newroot"
-if ! pacman -r "$newroot" -Sy --noconfirm "${pacman_args[@]}"; then
+if ! install-packages-build -r "$newroot" "${pacman_args[@]}"; then
 	die 'Failed to install packages to new root'
 fi

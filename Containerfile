@@ -12,7 +12,7 @@ COPY pacstrap-docker /usr/bin
 RUN <<EOF cat > /etc/pacman.conf
 [options]
 Architecture = auto
-ParallelDownloads = 16
+ParallelDownloads = 6
 SigLevel = Required DatabaseOptional
 LocalFileSigLevel = Never
 
