@@ -1,4 +1,7 @@
 base
+git
+grub
 nano
 squashfs-tools
 sudo
+xorriso
