@@ -1,12 +1,12 @@
 # Fork of https://github.com/Vanilla-OS/core-image/blob/main/.github/workflows/vib-build.yml.
 
 name: build-image
-on: # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
+on:
   push:
     branches:
       - main
       - dev
-    paths-ignore: # don't rebuild if only documentation has changed
+    paths-ignore:
       - "**.md"
   pull_request:
   workflow_dispatch:
@@ -14,8 +14,6 @@ on: # https://docs.github.com/en/actions/using-workflows/events-that-trigger-wor
 env:
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
 
-# Only deploys the branch named "live". Ignores all other branches, to allow
-# having "development" branches without interfering with GHCR image uploads.
 jobs:
   build:
     name: Build and push image
@@ -26,14 +24,13 @@ jobs:
       id-token: write
 
     steps:
-      # Checkout push-to-registry action GitHub repository
       - name: Checkout Push to Registry action
         uses: actions/checkout@v4
 
       - uses: actions/upload-artifact@v4
         with:
-         name: Containerfile
-         path: Containerfile
+          name: Containerfile
+          path: Containerfile
 
       - name: Generate image name
         run: |
@@ -41,12 +38,15 @@ jobs:
           echo "REPO_OWNER_LOWERCASE=$REPO_OWNER_LOWERCASE" >> "$GITHUB_ENV"
           echo "IMAGE_NAME=ghcr.io/$REPO_OWNER_LOWERCASE/core" >> "$GITHUB_ENV"
 
+      - name: Set BUILD_DATE
+        run: echo "BUILD_DATE=$(date -u +%Y/%m/%d)" >> "$GITHUB_ENV"
+
       - name: Docker meta
         id: docker_meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env. IMAGE_NAME }}
+            ${{ env.IMAGE_NAME }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -78,3 +78,5 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
           provenance: false
+          build-args: |
+            BUILD_DATE=${{ env.BUILD_DATE }}
