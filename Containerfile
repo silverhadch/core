@@ -3,7 +3,7 @@ FROM docker.io/library/archlinux:base-devel AS pacstrap
 # Automatically use build date (in format YYYY/MM/DD) or allow manual override
 # Should keep the images up to date.
 ARG BUILD_DATE
-ENV ARCHIVE_DATE=${BUILD_DATE:-$(date +%Y/%m/%d)}
+ENV ARCHIVE_DATE=${BUILD_DATE}
 ARG ARCHIVE_SERVER=https://archive.archlinux.org/repos
 
 RUN pacman-key --init
