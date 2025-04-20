@@ -1,6 +1,8 @@
 FROM docker.io/library/archlinux:base-devel AS pacstrap
 
-ARG ARCHIVE_DATE=2024/12/10
+# Automatically use build date (in format YYYY/MM/DD) or allow manual override
+ARG BUILD_DATE
+ENV ARCHIVE_DATE=${BUILD_DATE:-$(date +%Y/%m/%d)}
 ARG ARCHIVE_SERVER=https://archive.archlinux.org/repos
 
 RUN pacman-key --init
@@ -9,7 +11,9 @@ RUN pacman -Sy --needed --noconfirm archlinux-keyring arch-install-scripts
 WORKDIR /
 
 COPY pacstrap-docker /usr/bin
-RUN <<EOF cat > /etc/pacman.conf
+
+# Generate pacman.conf dynamically
+RUN bash -c "cat > /etc/pacman.conf" <<EOF
 [options]
 Architecture = auto
 ParallelDownloads = 6
@@ -17,17 +21,18 @@ SigLevel = Required DatabaseOptional
 LocalFileSigLevel = Never
 
 [core]
-Server = $ARCHIVE_SERVER/$ARCHIVE_DATE/core/os/\$arch
+Server = ${ARCHIVE_SERVER}/${ARCHIVE_DATE}/core/os/\$arch
 
 [extra]
-Server = $ARCHIVE_SERVER/$ARCHIVE_DATE/extra/os/\$arch
+Server = ${ARCHIVE_SERVER}/${ARCHIVE_DATE}/extra/os/\$arch
+
+[multilib]
+Server = ${ARCHIVE_SERVER}/${ARCHIVE_DATE}/multilib/os/\$arch
 EOF
 
-#RUN sed -i "s|ARCHIVE_SERVER|$ARCHIVE_SERVER|g" /etc/pacman.conf
-#RUN sed -i "s|ARCHIVE_DATE|$ARCHIVE_DATE|g" /etc/pacman.conf
 RUN cat /etc/pacman.conf
 
-RUN rm -rf /rootfs; mkdir /rootfs
+RUN rm -rf /rootfs && mkdir /rootfs
 RUN pacstrap-docker /rootfs base
 
 FROM scratch as root
@@ -42,15 +47,14 @@ LABEL supports-commonarch="true" \
 
 # Install extra packages
 COPY extra-packages /
-RUN pacman -Syu --needed --noconfirm - < extra-packages
-RUN rm /extra-packages
+RUN pacman -Syu --needed --noconfirm - < extra-packages && rm /extra-packages
 
-# Install and enable networkmanager and bluez
+# Install and enable NetworkManager and BlueZ
 RUN pacman -Syu --needed --noconfirm networkmanager bluez
-RUN systemctl enable NetworkManager; systemctl enable bluetooth
+RUN systemctl enable NetworkManager && systemctl enable bluetooth
 
 # Clean up cache
 RUN yes | pacman -Scc
 
-# Enable sudo permission for wheel users
+# Enable sudo for wheel group
 RUN echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/wheel
